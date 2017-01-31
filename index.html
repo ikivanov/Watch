@@ -1,0 +1,16 @@
+<html>
+    <body>
+        <canvas id="theWatch" width="300" height="300"></canvas>
+    </body>
+    
+    <script type="text/javascript" src="watch.js"></script>
+
+    <script type="text/javascript">
+        var canvas = document.getElementById("theWatch"),
+            watch = new WatchNamespace.Watch({
+                canvas: canvas
+            });
+
+        watch.render();
+    </script>
+</html>
