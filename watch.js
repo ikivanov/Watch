@@ -1,245 +1,241 @@
 (function() {
-    function Watch(config) {
-        var that = this;
+	class Watch {
+		constructor(config) {
+			this.canvas = config.canvas;
+			this.context = this.canvas.getContext("2d");
+		}
 
-        that.canvas = config.canvas;
-        that.context = that.canvas.getContext("2d");
-    }
+		render() {
+			this._render();
+			this._playSound();
+		}
 
-    Watch.prototype = {
-        render: function() {
-            this._render();
-            this._playSound(false);
-        },
+		_render() {
+			this._renderDial();
+			this._renderHourArrow();
+			this._renderMinutesArrow();
+			this._renderSecondsArrow();
 
-        _render: function() {
-            var that = this;
+			setTimeout(_ => {
+				this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+				this._render();
+			}, UPDATE_TIMEOUT);
+		}
 
-            that._renderDial();
-            that._renderHourArrow();
-            that._renderMinutesArrow();
-            that._renderSecondsArrow();
+		_renderDial() {
+			let ctx = this.context;
 
-            setTimeout(function() {
-                that.context.clearRect(0, 0, canvas.width, canvas.height);
-                that._render();
-            }, UPDATE_TIMEOUT);
-        },
+			ctx.beginPath();
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = DIAL_OUTLINE_COLOR;
+			ctx.arc(CENTER_X, CENTER_Y, RADIUS, 0, 2 * Math.PI);
+			ctx.fillStyle = DIAL_FILL_COLOR;
+			ctx.fill();
+			ctx.stroke();
 
-        _renderDial: function() {
-            var ctx = this.context;
-            
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = DIAL_OUTLINE_COLOR;
-            ctx.arc(CENTER_X, CENTER_Y, RADIUS, 0, 2 * Math.PI);
-            ctx.fillStyle = DIAL_FILL_COLOR;
-            ctx.fill();
-            ctx.stroke();
+			for (let angle = 0; angle < ANGLES_360; angle += MINUTES_STEP_ANGLE) {
+					let x = CENTER_X + ((RADIUS - RADIUS_OFFSET) * Math.cos(this._toRadians(angle)));
+					let y = CENTER_Y + ((RADIUS - RADIUS_OFFSET) * Math.sin(this._toRadians(angle)));
 
-            for (var angle = 0; angle < ANGLES_360; angle += MINUTES_STEP_ANGLE) {
-                 var x = CENTER_X + ((RADIUS - RADIUS_OFFSET) * Math.cos(this._toRadians(angle)));
-                 var y = CENTER_Y + ((RADIUS - RADIUS_OFFSET) * Math.sin(this._toRadians(angle)));
+				let radius = angle % HOURS_STEP_ANGLE === 0 ? HOUR_RADIUS : MINUTE_RADIUS;
 
-                var radius = angle % HOURS_STEP_ANGLE === 0 ? HOUR_RADIUS : MINUTE_RADIUS;
-    
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = BLACK;
-                ctx.fill();
-                ctx.stroke();
-            }
+				ctx.beginPath();
+				ctx.arc(x, y, radius, 0, 2 * Math.PI);
+				ctx.fillStyle = BLACK;
+				ctx.fill();
+				ctx.stroke();
+			}
 
-            this._renderHours();
-            this._renderMake();
-            this._renderDate();
+			this._renderHours();
+			this._renderMake();
+			this._renderDate();
 
-            this._renderTimezone(TIMEZONE1_CENTER_X, TIMEZEONE_CENTER_Y, TIMEZONE1_HOURS_OFFSET);
-            this._renderTimezone(TIMEZONE2_CENTER_X, TIMEZEONE_CENTER_Y, TIMEZONE2_HOURS_OFFSET);
-        },
+			this._renderTimezone(TIMEZONE1_CENTER_X, TIMEZEONE_CENTER_Y, TIMEZONE1_HOURS_OFFSET);
+			this._renderTimezone(TIMEZONE2_CENTER_X, TIMEZEONE_CENTER_Y, TIMEZONE2_HOURS_OFFSET);
+		}
 
-        _renderHours: function() {
-            var ctx = this.context,
-                hour = 1;
+		_renderHours() {
+			let ctx = this.context,
+				hour = 1;
 
-            for (var angle = -ANGLES_60; angle <= ANGLES_270; angle += HOURS_STEP_ANGLE, hour++) {
-                 var x = CENTER_X + (HOUR_DIGITS_RADIOUS * Math.cos(this._toRadians(angle)));
-                 var y = CENTER_Y + (HOUR_DIGITS_RADIOUS * Math.sin(this._toRadians(angle)));
+			for (let angle = -ANGLES_60; angle <= ANGLES_270; angle += HOURS_STEP_ANGLE, hour++) {
+					let x = CENTER_X + (HOUR_DIGITS_RADIOUS * Math.cos(this._toRadians(angle)));
+					let y = CENTER_Y + (HOUR_DIGITS_RADIOUS * Math.sin(this._toRadians(angle)));
 
-                ctx.font = HOURS_FONT_SIZE + "px Arial";
-                
-                var textSize = ctx.measureText(hour);
-                var textOffset = HOURS_FONT_SIZE / 2;
+				ctx.font = HOURS_FONT_SIZE + "px Arial";
 
-                y = y > 0 ? y + textOffset : y - textOffset;
+				let textSize = ctx.measureText(hour);
+				let textOffset = HOURS_FONT_SIZE / 2;
 
-                ctx.fillText(hour, x - textSize.width / 2, y);
-            }
-        },
+				y = y > 0 ? y + textOffset : y - textOffset;
 
-        _renderHourArrow: function() {
-            var ctx = this.context,
-                angle = this._getHoursAngle(new Date().getHours()),
-                x = CENTER_X + ((RADIUS - HOUR_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
-                y = CENTER_Y + ((RADIUS - HOUR_ARROW_LENGTH) * Math.sin(this._toRadians(angle)));
+				ctx.fillText(hour, x - textSize.width / 2, y);
+			}
+		}
 
-            ctx.beginPath();
-            ctx.lineWidth = 4;
-            ctx.moveTo(CENTER_X, CENTER_Y);
-            ctx.lineTo(x, y);
+		_renderHourArrow() {
+			let ctx = this.context,
+				angle = this._getHoursAngle(new Date().getHours()),
+				x = CENTER_X + ((RADIUS - HOUR_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
+				y = CENTER_Y + ((RADIUS - HOUR_ARROW_LENGTH) * Math.sin(this._toRadians(angle)));
 
-            ctx.stroke();
-        },
+			ctx.beginPath();
+			ctx.lineWidth = 4;
+			ctx.moveTo(CENTER_X, CENTER_Y);
+			ctx.lineTo(x, y);
 
-        _renderMinutesArrow: function() {
-            var ctx = this.context,
-                angle = this._getMinutesAngle(),
-                x = CENTER_X + ((RADIUS - MINUTE_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
-                y = CENTER_Y + ((RADIUS - MINUTE_ARROW_LENGTH) * Math.sin(this._toRadians(angle)));
+			ctx.stroke();
+		}
 
-            ctx.beginPath();
+		_renderMinutesArrow() {
+			let ctx = this.context,
+				angle = this._getMinutesAngle(),
+				x = CENTER_X + ((RADIUS - MINUTE_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
+				y = CENTER_Y + ((RADIUS - MINUTE_ARROW_LENGTH) * Math.sin(this._toRadians(angle)));
 
-            ctx.moveTo(CENTER_X, CENTER_Y);
-            ctx.lineTo(x, y);
+			ctx.beginPath();
 
-            ctx.stroke();
-        },
+			ctx.moveTo(CENTER_X, CENTER_Y);
+			ctx.lineTo(x, y);
 
-        _renderSecondsArrow: function() {
-            var ctx = this.context,
-                angle = this._getSecondsAgle(),
-                x = CENTER_X + ((RADIUS - SECONDS_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
-                y = CENTER_Y + ((RADIUS - SECONDS_ARROW_LENGTH) * Math.sin(this._toRadians(angle))),
-                tailX = CENTER_Y + ((RADIUS - SECONDS_ARROW_TAIL_LENGTH) * Math.cos(this._toRadians(angle + ANGLES_180)));
-                tailY = CENTER_Y + ((RADIUS - SECONDS_ARROW_TAIL_LENGTH) * Math.sin(this._toRadians(angle + ANGLES_180)));
+			ctx.stroke();
+		}
 
-            ctx.beginPath();
+		_renderSecondsArrow() {
+			let ctx = this.context,
+				angle = this._getSecondsAgle(),
+				x = CENTER_X + ((RADIUS - SECONDS_ARROW_LENGTH) * Math.cos(this._toRadians(angle))),
+				y = CENTER_Y + ((RADIUS - SECONDS_ARROW_LENGTH) * Math.sin(this._toRadians(angle))),
+				tailX = CENTER_Y + ((RADIUS - SECONDS_ARROW_TAIL_LENGTH) * Math.cos(this._toRadians(angle + ANGLES_180))),
+				tailY = CENTER_Y + ((RADIUS - SECONDS_ARROW_TAIL_LENGTH) * Math.sin(this._toRadians(angle + ANGLES_180)));
 
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = RED;
+			ctx.beginPath();
 
-            ctx.moveTo(CENTER_X, CENTER_Y);
-            ctx.lineTo(x, y);
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = RED;
 
-            ctx.moveTo(CENTER_X, CENTER_Y);
-            ctx.lineTo(tailX, tailY);
+			ctx.moveTo(CENTER_X, CENTER_Y);
+			ctx.lineTo(x, y);
 
-            ctx.stroke();
+			ctx.moveTo(CENTER_X, CENTER_Y);
+			ctx.lineTo(tailX, tailY);
 
-            this._renderSecondsArrowWheel();    
-        },
+			ctx.stroke();
 
-        _renderSecondsArrowWheel: function() {
-            var ctx = this.context;
+			this._renderSecondsArrowWheel();
+		}
 
-            ctx.beginPath();
-            ctx.arc(CENTER_X, CENTER_Y, SECONDS_ARROW_WHEEL_RADIUS, 0, 2 * Math.PI);
-            ctx.fillStyle = RED;
-            ctx.fill();
-            ctx.stroke();
-        },
+		_renderSecondsArrowWheel() {
+			let ctx = this.context;
 
-        _renderDate: function() {
-            var ctx = this.context;
+			ctx.beginPath();
+			ctx.arc(CENTER_X, CENTER_Y, SECONDS_ARROW_WHEEL_RADIUS, 0, 2 * Math.PI);
+			ctx.fillStyle = RED;
+			ctx.fill();
+			ctx.stroke();
+		}
 
-            ctx.font = HOURS_FONT_SIZE + "px Arial";
-            
-            var textWidth = ctx.measureText("00").width + 3;
+		_renderDate() {
+			let ctx = this.context;
 
-            ctx.fillStyle = WHITE;
-            ctx.fillRect(CENTER_X + DATE_RADIUS - 1, CENTER_Y - HOURS_FONT_SIZE / 2 + 1, textWidth, HOURS_FONT_SIZE);
+			ctx.font = HOURS_FONT_SIZE + "px Arial";
 
-            ctx.fillStyle = BLACK;
-            ctx.fillText(new Date ().getDate(), CENTER_X + DATE_RADIUS, CENTER_Y + HOURS_FONT_SIZE / 2);
-            ctx.stroke();
-        },
+			let textWidth = ctx.measureText("00").width + 3;
 
-        _renderMake: function() {
-            var ctx = this.context;
+			ctx.fillStyle = WHITE;
+			ctx.fillRect(CENTER_X + DATE_RADIUS - 1, CENTER_Y - HOURS_FONT_SIZE / 2 + 1, textWidth, HOURS_FONT_SIZE);
 
-            ctx.font = HOURS_FONT_SIZE + "px Arial";
-            
-            var textWidth = ctx.measureText(CLOCK_MAKE).width;
+			ctx.fillStyle = BLACK;
+			ctx.fillText(new Date ().getDate(), CENTER_X + DATE_RADIUS, CENTER_Y + HOURS_FONT_SIZE / 2);
+			ctx.stroke();
+		}
 
-            ctx.fillStyle = BLACK;
-            ctx.fillText(CLOCK_MAKE, CENTER_X - textWidth / 2, CENTER_Y - 65);
-            ctx.stroke();
-        },
+		_renderMake() {
+			let ctx = this.context;
 
-        _renderTimezone: function(x, y, hoursOffset) {
-            var ctx = this.context;
+			ctx.font = HOURS_FONT_SIZE + "px Arial";
 
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = BLACK;
-            ctx.arc(x, y, TIMEZONE_RADIUS, 0, 2 * Math.PI);
-            ctx.fillStyle = LIGHTGRAY;
-            ctx.fill();
+			let textWidth = ctx.measureText(CLOCK_MAKE).width;
 
-            ctx.stroke();
+			ctx.fillStyle = BLACK;
+			ctx.fillText(CLOCK_MAKE, CENTER_X - textWidth / 2, CENTER_Y - 65);
+			ctx.stroke();
+		}
 
-            for (var angle = 0; angle < ANGLES_360; angle += HOURS_STEP_ANGLE) {
-                 var x1 = x + ((TIMEZONE_RADIUS - 3) * Math.cos(this._toRadians(angle)));
-                 var y1 = y + ((TIMEZONE_RADIUS - 3) * Math.sin(this._toRadians(angle)));
+		_renderTimezone(x, y, hoursOffset) {
+			let ctx = this.context;
 
-                ctx.beginPath();
-                ctx.arc(x1, y1, 1, 0, 2 * Math.PI);
-                ctx.fillStyle = BLACK;
-                ctx.fill();
-                ctx.stroke();
-            }
+			ctx.beginPath();
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = BLACK;
+			ctx.arc(x, y, TIMEZONE_RADIUS, 0, 2 * Math.PI);
+			ctx.fillStyle = LIGHTGRAY;
+			ctx.fill();
 
-            var angle = this._getHoursAngle(new Date().getHours() + hoursOffset, true),
-                x2 = x + (TIMEZONE_HOUR_ARROW_RADIUS * Math.cos(this._toRadians(angle))),
-                y2 = y + (TIMEZONE_HOUR_ARROW_RADIUS * Math.sin(this._toRadians(angle)));
+			ctx.stroke();
 
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.moveTo(x, y);
-            ctx.lineTo(x2, y2);
+			for (let angle = 0; angle < ANGLES_360; angle += HOURS_STEP_ANGLE) {
+					let x1 = x + ((TIMEZONE_RADIUS - 3) * Math.cos(this._toRadians(angle)));
+					let y1 = y + ((TIMEZONE_RADIUS - 3) * Math.sin(this._toRadians(angle)));
 
-            ctx.stroke();
-        },
+				ctx.beginPath();
+				ctx.arc(x1, y1, 1, 0, 2 * Math.PI);
+				ctx.fillStyle = BLACK;
+				ctx.fill();
+				ctx.stroke();
+			}
 
-        _playSound: function(on) {
-            if (on === false) return;
+			let angle = this._getHoursAngle(new Date().getHours() + hoursOffset, true),
+				x2 = x + (TIMEZONE_HOUR_ARROW_RADIUS * Math.cos(this._toRadians(angle))),
+				y2 = y + (TIMEZONE_HOUR_ARROW_RADIUS * Math.sin(this._toRadians(angle)));
 
-            var audio = new Audio(TICK_TACK_SOUND_FILE);
-            audio.addEventListener('timeupdate', function(){
-                            var buffer = 1;
-                            if(this.currentTime > this.duration - buffer){
-                                this.currentTime = 0
-                                this.play()
-                            }}, false);
-            audio.play();
-        },
+			ctx.beginPath();
+			ctx.lineWidth = 2;
+			ctx.moveTo(x, y);
+			ctx.lineTo(x2, y2);
 
-        _toRadians: function(degrees) {
-            return degrees * Math.PI / ANGLES_180;
-        },
+			ctx.stroke();
+		}
 
-        _getHoursAngle: function(hours, noMinutesPrecission) {
-            var hour = hours <= 12 ? hours : hours - 12,
-                minutes = new Date().getMinutes(),
-                minutesDelta = noMinutesPrecission ? 0 : minutes / 2;
+		_playSound(on = false) {
+			if (on === false) return;
 
-            return (hour * ANGLES_30 + minutesDelta) - ANGLES_90;
-        },
+			let audio = new Audio(TICK_TACK_SOUND_FILE);
+			audio.addEventListener('timeupdate', function(){
+							let buffer = 1;
+							if(this.currentTime > this.duration - buffer){
+								this.currentTime = 0
+								this.play()
+							}}, false);
+			audio.play();
+		}
 
-        _getMinutesAngle: function() {
-            var minutes = new Date().getMinutes(),
-                seconds = new Date().getSeconds(),
-                secondsDelta = seconds / 10;
-            
-            return (minutes * MINUTES_STEP_ANGLE + secondsDelta) - ANGLES_90;
-        },
+		_toRadians(degrees) {
+			return degrees * Math.PI / ANGLES_180;
+		}
 
-        _getSecondsAgle: function() {
-            var seconds = new Date().getSeconds();
-            
-            return (seconds * MINUTES_STEP_ANGLE) - ANGLES_90;
-        }
-    };
+		_getHoursAngle(hours, noMinutesPrecission) {
+			let hour = hours <= 12 ? hours : hours - 12,
+				minutes = new Date().getMinutes(),
+				minutesDelta = noMinutesPrecission ? 0 : minutes / 2;
+
+			return (hour * ANGLES_30 + minutesDelta) - ANGLES_90;
+		}
+
+		_getMinutesAngle() {
+			let minutes = new Date().getMinutes(),
+				seconds = new Date().getSeconds(),
+				secondsDelta = seconds / 10;
+
+			return (minutes * MINUTES_STEP_ANGLE + secondsDelta) - ANGLES_90;
+		}
+
+		_getSecondsAgle() {
+			let seconds = new Date().getSeconds();
+
+			return (seconds * MINUTES_STEP_ANGLE) - ANGLES_90;
+		}
+	}
 
     window.WatchNamespace = {};
     WatchNamespace.Watch = Watch;
